@@ -1,9 +1,14 @@
 ---
   el:
     hosts:
-      centos7:
-        ansible_connection: docker
+      ubuntu1:
+        ansible_host: ansible-1.carfix.local
   deb:
     hosts:
-      ubuntu:
-        ansible_connection: docker
+      ubuntu2:
+        ansible_host: ansible-2.carfix.local
+  local:
+    hosts:
+      ubuntu3:
+        ansible_host: localhost
+        ansible_connection: local
