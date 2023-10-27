@@ -20,10 +20,6 @@ type_vector_source: "stdin"
 type_vector_sinks: "console"
 codec: "text
 ```
-Для измененеия версии Clickhouse:
-```
-clickhouse_version: "22.3.3.44"
-```
 
 Для изменения конфишурации Vector необходимо поменять шаблон в `template/vector.j2`
 ```
