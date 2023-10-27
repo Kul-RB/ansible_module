@@ -1,0 +1,9 @@
+---
+clickhouse_version: "22.3.3.44"
+clickhouse_packages:
+  - clickhouse-client
+  - clickhouse-server
+  - clickhouse-common-static
+type_vector_source: "stdin"
+type_vector_sinks: "console"
+codec: "text"

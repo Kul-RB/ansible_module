@@ -1,0 +1,56 @@
+---
+- name: Install Clickhouse
+  hosts: clickhouse
+  become: true
+  become_user: root
+  handlers:
+    - name: Start clickhouse service
+      ansible.builtin.service:
+        name: clickhouse-server
+        state: restarted
+  tasks:
+    - name: Instal tools for clickhouse
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - dirmngr
+    - name: Install key
+      shell: sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 8919F6BD2B48D754
+    - name: Instal deb package
+      shell: echo "deb https://packages.clickhouse.com/deb stable main" | sudo tee /etc/apt/sources.list.d/clickhouse.list
+    - name: Update packages
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Install clickhouse
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - clickhouse-server
+        - clickhouse-client
+      notify: Start clickhouse service
+    - name: Flush handlers
+      meta: flush_handlers
+    - name: Create database
+      ansible.builtin.command: "clickhouse-client -q 'create database logs;'"
+      register: create_db
+      failed_when: create_db.rc != 0 and create_db.rc !=82
+      changed_when: create_db.rc == 0
+    - name: Get bash for add vector deb
+      get_url:
+        url: "https://repositories.timber.io/public/vector/cfg/setup/bash.deb.sh"
+        dest: "/home/cfdata/vector.sh"
+    - name: Add package vector
+      shell: bash /home/cfdata/vector.sh
+    - name: Install vector
+      apt:
+        name: vector
+        state: present
+    - name: Configuration vector
+      template:
+        src: ./template/vector.j2
+        dest: /home/cfdata/vector.toml
