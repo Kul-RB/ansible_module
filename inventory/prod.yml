@@ -2,5 +2,5 @@
 clickhouse:
   hosts:
     clickhouse-01:
-      ansible_host: ansible-1.carfix.local
+      ansible_host: 192.168.29.10
 

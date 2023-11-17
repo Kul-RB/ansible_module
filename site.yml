@@ -8,6 +8,10 @@
       ansible.builtin.service:
         name: clickhouse-server
         state: restarted
+    - name: Restart vector service
+      service:
+        name: vector
+        state: restarted
   tasks:
     - name: Instal tools for clickhouse
       apt:
@@ -54,3 +58,4 @@
       template:
         src: ./template/vector.j2
         dest: /home/cfdata/vector.toml
+      notify: Restart vector service
