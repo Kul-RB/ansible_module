@@ -1,0 +1,14 @@
+worker_processes 1;
+events{}
+
+http{
+
+     include mime.types;
+
+   server{
+    listen 80;
+    root {{ lighthouse_path }};
+    index index.html;
+        }
+
+}

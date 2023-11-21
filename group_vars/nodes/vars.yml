@@ -7,3 +7,4 @@ clickhouse_packages:
 type_vector_source: "stdin"
 type_vector_sinks: "console"
 codec: "text"
+lighthouse_path: /home/ubuntu/lighthouse/
