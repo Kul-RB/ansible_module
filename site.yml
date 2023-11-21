@@ -1,101 +1,101 @@
 ---
-- name: Install Clickhouse
-  hosts: clickhouse
-  become: true
-  become_user: root
-  handlers:
+- name: Install Clickhouse # Play для установки clickhouse
+  hosts: clickhouse # Вводим имя хоста на который будетустанавливаться ПО
+  become: true # Уставнавливаем переменную для использования sudo
+  become_user: root # Устанвливаем пользователя подкотрым будет устанавливаться ПО 
+  handlers: # Handler который рестартует сервис clickhouse-server после установки
     - name: Start clickhouse service
       ansible.builtin.service:
         name: clickhouse-server
         state: restarted
   tasks:
-    - name: Instal tools for clickhouse
+    - name: Instal tools for clickhouse # Установка инструменнтов для работы clickhouse
       apt:
-        name: "{{ item }}"
+        name: "{{ item }}" # Перерменная list  которая содержит в себе названия инструментов(сервисов)
         state: present
-      loop:
+      loop: # Цикл с помощью которого происходит перебор перерменной item
         - apt-transport-https
         - ca-certificates
         - dirmngr
-    - name: Install key
+    - name: Install key # Установка ключа для clickhouse с помощью shell команды
       shell: sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 8919F6BD2B48D754
-    - name: Instal deb package
+    - name: Instal deb package # Установка пакета со stable версией clickhouse
       shell: echo "deb https://packages.clickhouse.com/deb stable main" | sudo tee /etc/apt/sources.list.d/clickhouse.list
-    - name: Update packages
+    - name: Update packages  # Обновление пакетов 
       apt:
         update_cache: yes
         cache_valid_time: 3600
-    - name: Install clickhouse
+    - name: Install clickhouse # Установка clickhouse-server и clickhouse-client
       apt:
         name: "{{ item }}"
         state: present
       loop:
         - clickhouse-server
         - clickhouse-client
-      notify: Start clickhouse service
+      notify: Start clickhouse service # Вызов handler
     - name: Flush handlers
       meta: flush_handlers
-    - name: Create database
+    - name: Create database # Создание БД для clickhouse
       ansible.builtin.command: "clickhouse-client -q 'create database logs;'"
       register: create_db
       failed_when: create_db.rc != 0 and create_db.rc !=82
       changed_when: create_db.rc == 0
-- name: Instal Vector
+- name: Instal Vector # Play для установки Vector
   hosts: vector
   become: true
   become_user: root
-  handlers: 
+  handlers:  # Handler который рестартует сервис vector после настройки
     - name: Restart Vector
       ansible.builtin.service:
         name: vector
         state: restarted
   tasks:
-    - name: Get bash for add vector deb
+    - name: Get bash for add vector deb # Скачивает bash скрипт для установки пакета Vector
       get_url:
         url: "https://repositories.timber.io/public/vector/cfg/setup/bash.deb.sh"
         dest: "/home/ubuntu/vector.sh"
-    - name: Add package vector
+    - name: Add package vector # Добавление пакета Vector
       shell: bash /home/ubuntu/vector.sh
-    - name: Install vector
+    - name: Install vector # Установка Vector
       apt:
         name: vector
         state: present
-    - name: Configuration vector
+    - name: Configuration vector # Базовая настройка Vector с помощью шаблона jinja2 
       template:
         src: /home/cfdata/ansible_module/hw_3_yandex/playbook/template/vector.j2
         dest: /home/ubuntu/vector.sh
-      notify: Restart Vector
+      notify: Restart Vector # Вызоыв handler
 
-- name: Install Lighthouse and NGINX
+- name: Install Lighthouse and NGINX # Play для установки NGNIX и Lighthouse
   hosts: lighthouse
   become: true
   become_user: root
-  handlers:
+  handlers: # Handler который рестартует сервис NGINX после настройки
     - name: Restart nginx
       service:
         name: nginx
         state: restarted
   tasks:
-    - name: Installing git
+    - name: Installing git # Устанавливаем git
       apt:
         name: git
         state: present
-    - name: Clone git Lighthouse
+    - name: Clone git Lighthouse # Клонируем репозиторий Lighthouse
       git:
         repo: https://github.com/VKCOM/lighthouse.git
         dest: /home/ubuntu/lighthouse
         single_branch: yes
         version: master
-    - name: Install nginx
+    - name: Install nginx # Устанавливаем NGINX
       apt:
         name: nginx
         state: present
-    - name: Delete default config Nginx
+    - name: Delete default config Nginx # Удаляем default config nginx
       file:
         path: /etc/nginx/nginx.conf
         state: absent
-    - name: Config Nginx for Lighthouse
+    - name: Config Nginx for Lighthouse # Создаем новый конфиг для nginx по шаблону nginx.j2
       template:
         src: /home/cfdata/ansible_module/hw_3_yandex/playbook/template/nginx.j2
         dest: /etc/nginx/nginx.conf
-      notify: Restart nginx
+      notify: Restart nginx # вызов handler
