@@ -8,47 +8,20 @@
       ansible.builtin.service:
         name: clickhouse-server
         state: restarted
-  tasks:
-    - name: Instal tools for clickhouse # Установка инструменнтов для работы clickhouse
-      apt:
-        name: "{{ item }}" # Перерменная list  которая содержит в себе названия инструментов(сервисов)
-        state: present
-      loop: # Цикл с помощью которого происходит перебор перерменной item
-        - apt-transport-https
-        - ca-certificates
-        - dirmngr
-    - name: Install key # Установка ключа для clickhouse с помощью shell команды
-      shell: sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 8919F6BD2B48D754
-    - name: Instal deb package # Установка пакета со stable версией clickhouse
-      shell: echo "deb https://packages.clickhouse.com/deb stable main" | sudo tee /etc/apt/sources.list.d/clickhouse.list
-    - name: Update packages  # Обновление пакетов 
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
-    - name: Install clickhouse # Установка clickhouse-server и clickhouse-client
-      apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - clickhouse-server
-        - clickhouse-client
-      notify: Start clickhouse service # Вызов handler
-    - name: Flush handlers
-      meta: flush_handlers
-    - name: Create database # Создание БД для clickhouse
-      ansible.builtin.command: "clickhouse-client -q 'create database logs;'"
-      register: create_db
-      failed_when: create_db.rc != 0 and create_db.rc !=82
-      changed_when: create_db.rc == 0
+  tasks: 
+    - name: Install Clickhouse
+      hosts: clickhouse
+      roles:
+        - clickhouse
 - name: Instal Vector # Play для установки Vector
-  hosts: vector
-  become: true
-  become_user: root
-  handlers:  # Handler который рестартует сервис vector после настройки
-    - name: Restart Vector
-      ansible.builtin.service:
-        name: vector
-        state: restarted
+      hosts: vector
+      become: true
+      become_user: root
+      handlers:  # Handler который рестартует сервис vector после настройки
+        - name: Restart Vector
+          ansible.builtin.service:
+          name: vector
+            state: restarted
   tasks:
     - name: Get bash for add vector deb # Скачивает bash скрипт для установки пакета Vector
       get_url:
